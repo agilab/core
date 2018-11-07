@@ -181,6 +181,10 @@ func (db *DB) Prepare(query string) (*Stmt, error) {
 	return &Stmt{stmt, db, names}, nil
 }
 
+func (s *Stmt) Exec(args ...interface{}) (sql.Result, error) {
+	return s.Stmt.Exec(args...)
+}
+
 func (s *Stmt) ExecMap(mp interface{}) (sql.Result, error) {
 	vv := reflect.ValueOf(mp)
 	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
@@ -191,7 +195,7 @@ func (s *Stmt) ExecMap(mp interface{}) (sql.Result, error) {
 	for k, i := range s.names {
 		args[i] = vv.Elem().MapIndex(reflect.ValueOf(k)).Interface()
 	}
-	return s.Stmt.Exec(args...)
+	return s.Exec(args...)
 }
 
 func (s *Stmt) ExecStruct(st interface{}) (sql.Result, error) {
@@ -204,7 +208,7 @@ func (s *Stmt) ExecStruct(st interface{}) (sql.Result, error) {
 	for k, i := range s.names {
 		args[i] = vv.Elem().FieldByName(k).Interface()
 	}
-	return s.Stmt.Exec(args...)
+	return s.Exec(args...)
 }
 
 func (s *Stmt) Query(args ...interface{}) (*Rows, error) {
@@ -280,6 +284,10 @@ var (
 	re = regexp.MustCompile(`[?](\w+)`)
 )
 
+func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return db.DB.Exec(query, args...)
+}
+
 // insert into (name) values (?)
 // insert into (name) values (?name)
 func (db *DB) ExecMap(query string, mp interface{}) (sql.Result, error) {
@@ -287,7 +295,7 @@ func (db *DB) ExecMap(query string, mp interface{}) (sql.Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	return db.DB.Exec(query, args...)
+	return db.Exec(query, args...)
 }
 
 func (db *DB) ExecStruct(query string, st interface{}) (sql.Result, error) {
@@ -295,7 +303,7 @@ func (db *DB) ExecStruct(query string, st interface{}) (sql.Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	return db.DB.Exec(query, args...)
+	return db.Exec(query, args...)
 }
 
 type EmptyScanner struct {
@@ -339,12 +347,16 @@ func (tx *Tx) Stmt(stmt *Stmt) *Stmt {
 	return stmt
 }
 
+func (tx *Tx) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return tx.Tx.Exec(query, args...)
+}
+
 func (tx *Tx) ExecMap(query string, mp interface{}) (sql.Result, error) {
 	query, args, err := MapToSlice(query, mp)
 	if err != nil {
 		return nil, err
 	}
-	return tx.Tx.Exec(query, args...)
+	return tx.Exec(query, args...)
 }
 
 func (tx *Tx) ExecStruct(query string, st interface{}) (sql.Result, error) {
@@ -352,7 +364,7 @@ func (tx *Tx) ExecStruct(query string, st interface{}) (sql.Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	return tx.Tx.Exec(query, args...)
+	return tx.Exec(query, args...)
 }
 
 func (tx *Tx) Query(query string, args ...interface{}) (*Rows, error) {
