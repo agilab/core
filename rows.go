@@ -30,6 +30,10 @@ func (rs *Rows) ToMapString() ([]map[string]string, error) {
 	return results, nil
 }
 
+func (rs *Rows) Scan(dest ...interface{}) error {
+	return rs.Rows.Scan(dest...)
+}
+
 // scan data to a struct's pointer according field index
 func (rs *Rows) ScanStructByIndex(dest ...interface{}) error {
 	if len(dest) == 0 {
@@ -60,7 +64,7 @@ func (rs *Rows) ScanStructByIndex(dest ...interface{}) error {
 		}
 	}
 
-	return rs.Rows.Scan(newDest...)
+	return rs.Scan(newDest...)
 }
 
 var (
@@ -113,7 +117,7 @@ func (rs *Rows) ScanStructByName(dest interface{}) error {
 		}
 	}
 
-	return rs.Rows.Scan(newDest...)
+	return rs.Scan(newDest...)
 }
 
 // scan data to a slice's pointer, slice's length should equal to columns' number
@@ -139,7 +143,7 @@ func (rs *Rows) ScanSlice(dest interface{}) error {
 		}
 	}
 
-	err = rs.Rows.Scan(newDest...)
+	err = rs.Scan(newDest...)
 	if err != nil {
 		return err
 	}
@@ -170,7 +174,7 @@ func (rs *Rows) ScanMap(dest interface{}) error {
 		newDest[i] = rs.db.reflectNew(vvv.Type().Elem()).Interface()
 	}
 
-	err = rs.Rows.Scan(newDest...)
+	err = rs.Scan(newDest...)
 	if err != nil {
 		return err
 	}
